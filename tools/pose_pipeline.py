@@ -125,7 +125,13 @@ def _cmd_sentence(args: argparse.Namespace) -> int:
 def _cmd_viz(args: argparse.Namespace) -> int:
     pose = np.load(args.npy)
 
-    # Accept either (T, 543, 3) OR (543, 3) (single frame)
+    # Accept either:
+    # - (T, 543, 3) sequence
+    # - (N, T, 543, 3) multiple instances (take first instance for preview)
+    # - (543, 3) single frame
+    if pose.ndim == 4:
+        pose = pose[0]
+
     if pose.ndim == 2:
         pose = pose[None, ...]
 

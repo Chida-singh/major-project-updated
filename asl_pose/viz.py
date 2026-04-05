@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
+import tempfile
 
 import cv2
 import numpy as np
@@ -42,12 +44,27 @@ def visualize_pose_sequence(
     output_path = Path(output_path)
     w, h = canvas_size
 
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    out = cv2.VideoWriter(str(output_path), fourcc, fps, (w, h))
-
     seq = np.asarray(pose_sequence)
     if seq.ndim != 3 or seq.shape[1] < 543 or seq.shape[2] < 2:
         raise ValueError(f"Expected shape (T, 543, 3), got {seq.shape}")
+
+    # OpenCV's MP4 codecs are often not playable out-of-the-box on Windows.
+    # Strategy:
+    # - Always render frames into a temporary MJPG .avi (widely decodable)
+    # - If the user asked for .mp4, transcode to H.264 using ffmpeg.
+    requested_suffix = output_path.suffix.lower()
+    want_mp4 = requested_suffix == ".mp4"
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="asl_pose_viz_"))
+    tmp_avi = tmp_dir / "render.avi"
+
+    fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+    out = cv2.VideoWriter(str(tmp_avi), fourcc, fps, (w, h))
+    if not out.isOpened():
+        raise RuntimeError(
+            "OpenCV VideoWriter failed to open. "
+            "Try a different output path, or install a full ffmpeg build."
+        )
 
     for frame_landmarks in seq:
         canvas = np.full((h, w, 3), 255, dtype=np.uint8)
@@ -79,3 +96,47 @@ def visualize_pose_sequence(
         out.write(canvas)
 
     out.release()
+
+    if not tmp_avi.exists() or tmp_avi.stat().st_size == 0:
+        raise RuntimeError("Visualization render produced an empty video file")
+
+    if not want_mp4:
+        # If user requested a non-mp4 path, just move the AVI there.
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_avi.replace(output_path)
+        return
+
+    # Transcode AVI -> H.264 MP4 for maximum compatibility.
+    from imageio_ffmpeg import get_ffmpeg_exe
+
+    ffmpeg = get_ffmpeg_exe()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        ffmpeg,
+        "-y",
+        "-loglevel",
+        "error",
+        "-i",
+        str(tmp_avi),
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
+        str(output_path),
+    ]
+
+    try:
+        subprocess.run(cmd, check=True)
+    except Exception as e:
+        # If ffmpeg fails, keep the AVI next to the requested MP4 name.
+        fallback = output_path.with_suffix(".avi")
+        try:
+            tmp_avi.replace(fallback)
+        except Exception:
+            pass
+        raise RuntimeError(
+            f"ffmpeg transcode failed ({type(e).__name__}: {e}). "
+            f"Kept AVI fallback at: {fallback}"
+        )
