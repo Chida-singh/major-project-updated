@@ -4,3 +4,7 @@ numpy
 tqdm
 yt-dlp
 imageio-ffmpeg
+fastapi
+uvicorn[standard]
+openai
+youtube-transcript-api

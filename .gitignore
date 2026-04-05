@@ -4,6 +4,10 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Local secrets
+.env
+.env.*
+
 # Large/generated arrays and media
 *.npy
 *.npz
