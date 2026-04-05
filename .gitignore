@@ -1,0 +1,37 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Large/generated arrays and media
+*.npy
+*.npz
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.wav
+*.mp3
+*.flac
+*.zip
+*.7z
+*.tar
+*.tar.gz
+
+# MediaPipe task model cache (large)
+models/**
+!models/
+!models/README.md
+
+# Generated pose database (large) — keep small metadata
+pose_database/**
+!pose_database/
+!pose_database/index.json
+!pose_database/README.md
+
+# External datasets (large) — keep placeholder docs only
+WLASL/**
+!WLASL/
+!WLASL/README.md
+.DS_Store

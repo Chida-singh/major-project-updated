@@ -1,0 +1,6 @@
+mediapipe==0.10.*
+opencv-python
+numpy
+tqdm
+yt-dlp
+imageio-ffmpeg
