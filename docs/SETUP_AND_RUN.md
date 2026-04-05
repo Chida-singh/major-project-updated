@@ -82,6 +82,51 @@ python tools\pose_pipeline.py lookup --gloss HELP --out help.npy
 python tools\pose_pipeline.py viz --npy help.npy --out help.mp4
 ```
 
+## 6.1) Scale up to WLASL100/300/1000/2000
+
+In this repo, “WLASL100/300/1000/2000” is implemented as: process the **first N gloss entries** from `WLASL/start_kit/WLASL_v0.3.json`.
+
+Recommended scaling approach:
+
+1. Start with `--limit-glosses 300`
+2. Then `1000`
+3. Then `2000` (overnight)
+
+### Step A — Prepare/download trimmed clips
+
+This creates per-instance mp4 clips under `WLASL/start_kit/videos/`.
+
+Example for WLASL2000 (1 instance per gloss):
+
+```powershell
+python tools\wlasl_setup.py --include-youtube --limit-glosses 2000 --max-instances-per-gloss 1
+```
+
+If you get rate limits or failures, re-run it; it skips files that already exist.
+
+### Step B — Build the pose database
+
+Example for WLASL2000 (1 instance per gloss):
+
+```powershell
+python tools\pose_pipeline.py build-db --limit-glosses 2000 --limit-instances-per-gloss 1
+```
+
+Performance knobs you can use:
+
+- Faster (less accurate): add `--frame-step 2`
+- Faster (much less compute): add `--no-face` (drops face landmarks)
+- If supported on your machine: add `--gpu`
+
+### Rough storage expectations (pose DB only)
+
+Each gloss instance saved is about ~0.19 MB as float32 (`30 x 543 x 3`).
+
+- 2000 glosses x 1 instance ≈ ~380 MB
+- 2000 glosses x 5 instances ≈ ~1.9 GB
+
+Video storage will dominate (can be many GB).
+
 ## 7) Run the website (instead of extension popup)
 
 Start the FastAPI server:
@@ -89,6 +134,12 @@ Start the FastAPI server:
 ```powershell
 .\.venv\Scripts\Activate.ps1
 uvicorn server.main:app --reload
+```
+
+Or use the helper script:
+
+```powershell
+pwsh tools\run_website.ps1
 ```
 
 Open in browser:

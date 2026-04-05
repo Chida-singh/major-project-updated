@@ -27,6 +27,7 @@ def _cmd_single(args: argparse.Namespace) -> int:
         include_pose=True,
         include_hands=True,
         frame_step=args.frame_step,
+        use_gpu=bool(getattr(args, "gpu", False)),
     )
 
     seq = process_video(args.video, start_frame=args.start_frame, end_frame=args.end_frame, config=cfg)
@@ -47,9 +48,6 @@ def _cmd_single(args: argparse.Namespace) -> int:
 
 
 def _cmd_build_db(args: argparse.Namespace) -> int:
-    if args.gpu:
-        os.environ["MEDIAPIPE_DISABLE_GPU"] = "0"
-
     cfg = VideoProcessConfig(
         model_complexity=args.model_complexity,
         min_detection_confidence=args.min_detection_confidence,
@@ -58,6 +56,7 @@ def _cmd_build_db(args: argparse.Namespace) -> int:
         include_pose=True,
         include_hands=True,
         frame_step=args.frame_step,
+        use_gpu=bool(args.gpu),
     )
 
     saved = build_pose_database(
@@ -150,6 +149,7 @@ def main() -> int:
     p_single.add_argument("--min-tracking-confidence", type=float, default=0.5)
     p_single.add_argument("--frame-step", type=int, default=1)
     p_single.add_argument("--no-face", action="store_true")
+    p_single.add_argument("--gpu", action="store_true", help="Use MediaPipe Tasks GPU delegate when available")
     p_single.set_defaults(func=_cmd_single)
 
     p_db = sub.add_parser("build-db", help="Build per-gloss .npy database from WLASL")

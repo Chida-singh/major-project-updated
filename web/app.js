@@ -24,10 +24,39 @@ function setStatus(el, text) {
   el.textContent = text;
 }
 
+function setStatusOk(el, text) {
+  el.textContent = text;
+  el.classList.remove('error');
+}
+
+function setStatusError(el, text) {
+  el.textContent = text;
+  el.classList.add('error');
+}
+
 function clearCanvas(ctx, w, h) {
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = '#0b1020';
   ctx.fillRect(0, 0, w, h);
+}
+
+function resizeCanvasToDisplaySize(canvas, ctx) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const cssWidth = Math.max(1, Math.round(rect.width));
+  const cssHeight = Math.max(1, Math.round(rect.height));
+
+  const targetWidth = Math.max(1, Math.round(cssWidth * dpr));
+  const targetHeight = Math.max(1, Math.round(cssHeight * dpr));
+
+  if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+  }
+
+  // Draw in CSS pixels.
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { cssWidth, cssHeight };
 }
 
 function drawFramePoints(ctx, frameXY, w, h) {
@@ -59,7 +88,7 @@ function drawFramePoints(ctx, frameXY, w, h) {
     const py = (pad + ny * (1 - 2 * pad)) * h;
 
     ctx.beginPath();
-    ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+    ctx.arc(px, py, 1.4, 0, Math.PI * 2);
     ctx.fill();
   }
 }
@@ -70,49 +99,84 @@ async function main() {
   const transcriptStatus = document.getElementById('transcriptStatus');
   const transcriptText = document.getElementById('transcriptText');
 
+  const backendStatus = document.getElementById('backendStatus');
+
   const gloss = document.getElementById('gloss');
   const renderPose = document.getElementById('renderPose');
   const poseStatus = document.getElementById('poseStatus');
 
   const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
 
-  clearCanvas(ctx, canvas.width, canvas.height);
+  if (!ytUrl || !fetchTranscript || !transcriptStatus || !transcriptText) {
+    console.error('Missing transcript UI elements');
+    return;
+  }
+
+  if (!gloss || !renderPose || !poseStatus || !canvas) {
+    console.error('Missing pose UI elements');
+    return;
+  }
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    setStatusError(poseStatus, 'Error: Canvas 2D context unavailable');
+    return;
+  }
+
+  // Ensure initial crisp rendering.
+  const initialSize = resizeCanvasToDisplaySize(canvas, ctx);
+  clearCanvas(ctx, initialSize.cssWidth, initialSize.cssHeight);
+
+  // Health check: tells you immediately if the backend is reachable.
+  if (backendStatus) {
+    backendStatus.textContent = 'Backend: checking...';
+    backendStatus.classList.remove('error');
+    try {
+      const res = await fetch('/api/health');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      backendStatus.textContent = 'Backend: OK';
+    } catch (e) {
+      backendStatus.textContent = `Backend: not reachable (${e.message})`;
+      backendStatus.classList.add('error');
+    }
+  }
 
   fetchTranscript.addEventListener('click', async () => {
-    setStatus(transcriptStatus, 'Fetching...');
+    setStatusOk(transcriptStatus, 'Fetching...');
     transcriptText.value = '';
 
     try {
       const data = await postJson('/api/transcript/youtube', { url: ytUrl.value });
       transcriptText.value = data.text || '';
-      setStatus(transcriptStatus, `OK (video_id=${data.video_id})`);
+      setStatusOk(transcriptStatus, `OK (video_id=${data.video_id})`);
     } catch (e) {
-      setStatus(transcriptStatus, `Error: ${e.message}`);
+      setStatusError(transcriptStatus, `Error: ${e.message}`);
     }
   });
 
   renderPose.addEventListener('click', async () => {
-    setStatus(poseStatus, 'Loading...');
-    clearCanvas(ctx, canvas.width, canvas.height);
+    setStatusOk(poseStatus, 'Loading...');
+    const size = resizeCanvasToDisplaySize(canvas, ctx);
+    clearCanvas(ctx, size.cssWidth, size.cssHeight);
 
     try {
       const data = await postJson('/api/pose/lookup', { gloss: gloss.value });
-      setStatus(poseStatus, `OK (${data.gloss})`);
+      setStatusOk(poseStatus, `OK (${data.gloss})`);
 
       const frames = data.frames_xy;
       let i = 0;
 
       function tick() {
-        clearCanvas(ctx, canvas.width, canvas.height);
-        drawFramePoints(ctx, frames[i], canvas.width, canvas.height);
+        const { cssWidth, cssHeight } = resizeCanvasToDisplaySize(canvas, ctx);
+        clearCanvas(ctx, cssWidth, cssHeight);
+        drawFramePoints(ctx, frames[i], cssWidth, cssHeight);
         i = (i + 1) % frames.length;
         requestAnimationFrame(tick);
       }
 
       requestAnimationFrame(tick);
     } catch (e) {
-      setStatus(poseStatus, `Error: ${e.message}`);
+      setStatusError(poseStatus, `Error: ${e.message}`);
     }
   });
 }

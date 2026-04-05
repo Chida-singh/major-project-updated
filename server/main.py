@@ -81,6 +81,13 @@ def pose_lookup(req: PoseLookupRequest) -> dict[str, Any]:
     if not gloss:
         raise HTTPException(status_code=400, detail="Missing gloss")
 
+    index_path = REPO_ROOT / "pose_database" / "index.json"
+    if not index_path.exists():
+        raise HTTPException(
+            status_code=400,
+            detail="pose_database not found. Run: python tools\\pose_pipeline.py build-db",
+        )
+
     try:
         pose = get_pose_for_gloss(gloss)
     except Exception as e:

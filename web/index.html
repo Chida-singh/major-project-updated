@@ -4,44 +4,265 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ASL Overlay Website</title>
-    <link rel="stylesheet" href="/static/style.css" />
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --primary: #111827;
+        --primaryText: #ffffff;
+        --danger: #b91c1c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .container {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      header {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+
+      .banner {
+        border: 1px solid var(--border);
+        background: #fff;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin: 12px 0 0;
+        display: none;
+      }
+
+      .banner.error {
+        border-color: rgba(185, 28, 28, 0.35);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: -0.01em;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      @media (min-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+          align-items: start;
+        }
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+      }
+
+      .card h2 {
+        margin: 0 0 10px;
+        font-size: 16px;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      label {
+        display: block;
+        margin: 12px 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        margin-top: 6px;
+        font-size: 14px;
+        background: #fff;
+        color: var(--text);
+      }
+
+      textarea {
+        resize: vertical;
+        line-height: 1.5;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--primary);
+        color: var(--primaryText);
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .status {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .status.error {
+        color: var(--danger);
+      }
+
+      canvas {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #0b1020;
+        margin-top: 12px;
+      }
+
+      footer {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          'Liberation Mono', 'Courier New', monospace;
+        font-size: 12px;
+      }
+    </style>
   </head>
   <body>
     <main class="container">
-      <h1>ASL Overlay Website</h1>
+      <header>
+        <h1>ASL Overlay Website</h1>
+        <p class="subtitle">
+          Local web UI for transcript fetch and pose lookup demo.
+          Roadmap lives in <code>docs/ROADMAP.md</code>.
+          <span id="backendStatus" class="status"></span>
+        </p>
 
-      <section class="card">
-        <h2>YouTube Transcript (website)</h2>
-        <label>
-          YouTube URL or ID
-          <input id="ytUrl" type="text" placeholder="https://www.youtube.com/watch?v=..." />
-        </label>
-        <div class="row">
-          <button id="fetchTranscript">Fetch transcript</button>
-          <span id="transcriptStatus" class="status"></span>
+        <noscript>
+          <div class="banner error" style="display: block">
+            This page requires JavaScript.
+          </div>
+        </noscript>
+
+        <div id="fileModeBanner" class="banner error">
+          You opened this page as a local file. Run the server and open
+          <code>http://127.0.0.1:8000/</code> instead.
         </div>
-        <textarea id="transcriptText" rows="8" placeholder="Transcript will appear here..."></textarea>
-      </section>
+      </header>
 
-      <section class="card">
-        <h2>Pose Lookup Demo</h2>
-        <p class="muted">Uses the local pose database (if present) and draws face/body/hand points on a canvas.</p>
-        <label>
-          Gloss (e.g., HELP)
-          <input id="gloss" type="text" placeholder="HELP" />
-        </label>
-        <div class="row">
-          <button id="renderPose">Render demo</button>
-          <span id="poseStatus" class="status"></span>
-        </div>
-        <canvas id="canvas" width="640" height="360"></canvas>
-      </section>
+      <div class="grid">
+        <section class="card">
+          <h2>YouTube Transcript</h2>
+          <p class="muted">Fetches transcript server-side using <code>youtube_transcript_api</code>.</p>
 
-      <footer class="muted">
-        <div>Roadmap: see <code>docs/ROADMAP.md</code></div>
-      </footer>
+          <label>
+            YouTube URL or ID
+            <input
+              id="ytUrl"
+              type="text"
+              placeholder="https://www.youtube.com/watch?v=..."
+              autocomplete="off"
+            />
+          </label>
+
+          <div class="row">
+            <button id="fetchTranscript">Fetch transcript</button>
+            <span id="transcriptStatus" class="status"></span>
+          </div>
+
+          <textarea
+            id="transcriptText"
+            rows="10"
+            placeholder="Transcript will appear here..."
+          ></textarea>
+        </section>
+
+        <section class="card">
+          <h2>Pose Lookup Demo</h2>
+          <p class="muted">
+            Requires a local <code>pose_database/</code>. Draws landmark points on a canvas.
+          </p>
+
+          <label>
+            Gloss (example: HELP)
+            <input id="gloss" type="text" placeholder="HELP" autocomplete="off" />
+          </label>
+
+          <div class="row">
+            <button id="renderPose">Render demo</button>
+            <span id="poseStatus" class="status"></span>
+          </div>
+
+          <canvas id="canvas" width="640" height="360"></canvas>
+
+          <footer>
+            <div>
+              Tip: build the DB using <code>python tools\pose_pipeline.py build-db</code>.
+            </div>
+          </footer>
+        </section>
+      </div>
     </main>
 
     <script src="/static/app.js"></script>
+    <script>
+      (function () {
+        if (window.location && window.location.protocol === 'file:') {
+          var banner = document.getElementById('fileModeBanner');
+          if (banner) banner.style.display = 'block';
+
+          var ids = ['fetchTranscript', 'renderPose'];
+          for (var i = 0; i < ids.length; i++) {
+            var btn = document.getElementById(ids[i]);
+            if (btn) btn.disabled = true;
+          }
+        }
+      })();
+    </script>
   </body>
 </html>

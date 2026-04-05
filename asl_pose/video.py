@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+import warnings
 
 import cv2
 import numpy as np
@@ -22,6 +23,7 @@ class VideoProcessConfig:
     include_pose: bool = True
     include_hands: bool = True
     frame_step: int = 1  # >1 = skip frames
+    use_gpu: bool = False
 
 
 _HOLISTIC_TASK_URL = (
@@ -76,8 +78,28 @@ def process_video(
 
     import mediapipe as mp  # local import so import errors show clearly
 
-    # Legacy Solutions API (mp.solutions) may not be present in newer wheels.
-    if hasattr(mp, "solutions"):
+    backend = os.environ.get("ASL_POSE_BACKEND", "tasks").strip().lower()
+    prefer_tasks = backend != "solutions"
+    force_tasks = backend == "tasks"
+
+    # Tasks API (HolisticLandmarker) backend.
+    # Prefer Tasks when available; fall back to legacy Solutions if Tasks isn't importable.
+    mp_tasks = None
+    vision = None
+    BaseOptions = None
+    if prefer_tasks:
+        try:
+            import importlib
+
+            mp_tasks = importlib.import_module("mediapipe.tasks.python")
+            vision = mp_tasks.vision
+            BaseOptions = mp_tasks.BaseOptions
+        except Exception:
+            if force_tasks:
+                raise
+            mp_tasks = None
+
+    if mp_tasks is None and hasattr(mp, "solutions"):
         mp_holistic = mp.solutions.holistic
 
         with mp_holistic.Holistic(
@@ -114,12 +136,8 @@ def process_video(
 
                 frame_idx += 1
     else:
-        # Tasks API (HolisticLandmarker) backend.
-        import importlib
-
-        mp_tasks = importlib.import_module("mediapipe.tasks.python")
-        vision = mp_tasks.vision
-        BaseOptions = mp_tasks.BaseOptions
+        if mp_tasks is None:
+            return None
 
         model_path_str = os.environ.get("ASL_POSE_HOLISTIC_TASK", "").strip()
         if model_path_str:
@@ -128,17 +146,43 @@ def process_video(
             model_path = _workspace_root() / "models" / "holistic_landmarker.task"
         model_path = _ensure_holistic_task_model(model_path)
 
-        options = vision.HolisticLandmarkerOptions(
-            base_options=BaseOptions(model_asset_path=str(model_path)),
-            running_mode=vision.RunningMode.VIDEO,
-            min_face_detection_confidence=config.min_detection_confidence,
-            min_face_landmarks_confidence=config.min_tracking_confidence,
-            min_pose_detection_confidence=config.min_detection_confidence,
-            min_pose_landmarks_confidence=config.min_tracking_confidence,
-            min_hand_landmarks_confidence=config.min_tracking_confidence,
-        )
+        want_gpu = bool(config.use_gpu) or os.environ.get("ASL_POSE_USE_GPU", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "y",
+        }
 
-        landmarker = vision.HolisticLandmarker.create_from_options(options)
+        def _make_base_options(*, use_gpu: bool) -> object:
+            if hasattr(BaseOptions, "Delegate"):
+                delegate = BaseOptions.Delegate.GPU if use_gpu else BaseOptions.Delegate.CPU
+                return BaseOptions(model_asset_path=str(model_path), delegate=delegate)
+            return BaseOptions(model_asset_path=str(model_path))
+
+        def _make_options(*, use_gpu: bool):
+            return vision.HolisticLandmarkerOptions(
+                base_options=_make_base_options(use_gpu=use_gpu),
+                running_mode=vision.RunningMode.VIDEO,
+                min_face_detection_confidence=config.min_detection_confidence,
+                min_face_landmarks_confidence=config.min_tracking_confidence,
+                min_pose_detection_confidence=config.min_detection_confidence,
+                min_pose_landmarks_confidence=config.min_tracking_confidence,
+                min_hand_landmarks_confidence=config.min_tracking_confidence,
+            )
+
+        landmarker = None
+        if want_gpu:
+            try:
+                landmarker = vision.HolisticLandmarker.create_from_options(_make_options(use_gpu=True))
+            except Exception as e:
+                warnings.warn(
+                    f"MediaPipe GPU delegate requested but failed ({type(e).__name__}: {e}); falling back to CPU.",
+                    RuntimeWarning,
+                )
+                landmarker = None
+
+        if landmarker is None:
+            landmarker = vision.HolisticLandmarker.create_from_options(_make_options(use_gpu=False))
         try:
             fps = cap.get(cv2.CAP_PROP_FPS)
             if not fps or fps <= 1e-6:
