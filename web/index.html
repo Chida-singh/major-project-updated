@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ASL Overlay Website</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>ASL Overlay Website</h1>
+
+      <section class="card">
+        <h2>YouTube Transcript (website)</h2>
+        <label>
+          YouTube URL or ID
+          <input id="ytUrl" type="text" placeholder="https://www.youtube.com/watch?v=..." />
+        </label>
+        <div class="row">
+          <button id="fetchTranscript">Fetch transcript</button>
+          <span id="transcriptStatus" class="status"></span>
+        </div>
+        <textarea id="transcriptText" rows="8" placeholder="Transcript will appear here..."></textarea>
+      </section>
+
+      <section class="card">
+        <h2>Pose Lookup Demo</h2>
+        <p class="muted">Uses the local pose database (if present) and draws face/body/hand points on a canvas.</p>
+        <label>
+          Gloss (e.g., HELP)
+          <input id="gloss" type="text" placeholder="HELP" />
+        </label>
+        <div class="row">
+          <button id="renderPose">Render demo</button>
+          <span id="poseStatus" class="status"></span>
+        </div>
+        <canvas id="canvas" width="640" height="360"></canvas>
+      </section>
+
+      <footer class="muted">
+        <div>Roadmap: see <code>docs/ROADMAP.md</code></div>
+      </footer>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

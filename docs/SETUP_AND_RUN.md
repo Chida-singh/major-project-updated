@@ -82,10 +82,23 @@ python tools\pose_pipeline.py lookup --gloss HELP --out help.npy
 python tools\pose_pipeline.py viz --npy help.npy --out help.mp4
 ```
 
-## 7) Where the browser extension lives
+## 7) Run the website (instead of extension popup)
 
-- The existing Chrome extension is in `extension/`.
-- It currently extracts YouTube transcripts; later it will be upgraded to render the signer overlay.
+Start the FastAPI server:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+uvicorn server.main:app --reload
+```
+
+Open in browser:
+
+- http://127.0.0.1:8000/
+
+What you can test right now:
+
+- Fetch a YouTube transcript (server-side) into the page.
+- Demo pose lookup rendering on the canvas (requires a local `pose_database/`).
 
 ## Troubleshooting
 

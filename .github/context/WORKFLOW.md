@@ -15,7 +15,9 @@ These map to the end-to-end pipeline stages.
 - `pose_database/` — generated DB (large `.npy` ignored; keep `index.json`)
 - `models/` — cached MediaPipe task model (ignored)
 - `WLASL/` — dataset clone/videos (ignored)
-- `extension/` — browser extension shell (to be upgraded into the overlay)
+- `server/` — FastAPI app serving the website
+- `web/` — website frontend (Canvas overlay will live here)
+- `extension/` — legacy extension popup (not used)
 
 ## Contribution rules
 

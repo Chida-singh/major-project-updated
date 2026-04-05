@@ -21,7 +21,9 @@ Takes any lecture video, transcribes speech with **Whisper**, converts English �
 - `WLASL/` — external dataset repo + videos (large; not committed).
 - `models/` — cached MediaPipe task models (large; not committed).
 - `docs/` — project docs: roadmap, missing assets, API contracts.
-- `extension/` — existing Chrome extension shell (YouTube transcript extraction; will be upgraded to the overlay renderer).
+- `server/` — FastAPI app that serves the local website.
+- `web/` — static website UI (served by `server/`).
+- `extension/` — legacy Chrome extension popup (not used).
 
 ## Setup + run (teammates)
 

@@ -22,7 +22,14 @@ Turn lecture videos into a browser overlay that shows a synchronized ASL signer 
 
 ## What was imported from other work
 
-- `extension/` — existing Chrome extension for YouTube transcript extraction (will be extended into the overlay renderer).
+- `extension/` — legacy Chrome extension popup (not used).
+
+## Frontend choice (important)
+
+We are building a **website UI**, not an extension popup.
+
+- Backend: `server/` (FastAPI)
+- Frontend: `web/` (static HTML/JS)
 
 ## Where to track work
 

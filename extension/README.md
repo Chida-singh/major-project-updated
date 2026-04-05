@@ -1,19 +1,23 @@
-# Browser Extension (current)
+# Legacy: Browser Extension (not used)
 
-This folder contains the existing Chrome extension that can extract YouTube transcripts.
+This folder contains an older Chrome extension popup that extracts YouTube transcripts.
 
-## What it does now
+We are **not** using the extension UI anymore.
 
-- Runs on `youtube.com/watch` pages.
-- Extracts transcript text (DOM-based + API fallback).
-- Shows transcript in the popup and can download a `transcript.json`.
+## Replacement: website
 
-## How this fits the final pipeline
+Use the website instead:
 
-This extension is the **frontend shell** we will extend in Stage 7:
+- Backend: `server/`
+- Frontend: `web/`
 
-- Replace “transcript-only” usage with a Canvas overlay that draws the signer.
-- Call the backend `FastAPI /translate/realtime` endpoint to fetch pose frames.
-- Sync poses to the video `currentTime`.
+Run:
 
-See `docs/ROADMAP.md` tasks `29_...` → `34_...` for the planned changes.
+```powershell
+.\.venv\Scripts\Activate.ps1
+uvicorn server.main:app --reload
+```
+
+Open:
+
+- http://127.0.0.1:8000/

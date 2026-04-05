@@ -53,7 +53,7 @@ Status markers:
 - [ ] 30_define_pose_transport_json_frames — Define transport format for pose sequence to browser (JSON frames array)
 - [ ] 31_requestanimationframe_sync_loop — Implement `requestAnimationFrame` loop (video current time → pose frame index)
 - [ ] 32_fastapi_translate_realtime_endpoint — Build FastAPI `/translate/realtime` endpoint returning pose JSON
-- [ ] 33_extension_canvas_overlay_integration — Connect extension UI to Canvas overlay (replace SMPL‑X call in `content.js` with pose JSON fetch + draw)
+- [ ] 33_website_canvas_overlay_integration — Connect website UI to Canvas overlay (fetch pose JSON from backend and draw on canvas)
 - [ ] 34_overlay_controls — Add overlay controls (position, size, handedness toggle)
 - [ ] 35_end_to_end_demo_lecture — Run full pipeline on a real lecture video and record the demo
 

@@ -51,5 +51,5 @@ The source-of-truth roadmap is `docs/ROADMAP.md`.
 
 ## Imported code (in repo)
 
-- [x] `extension/` — Chrome extension shell for extracting YouTube transcripts.
-  - This is planned to become the overlay renderer in tasks `29_...` → `34_...`.
+- [x] Website UI is in `server/` + `web/`.
+- [x] `extension/` remains in the repo as legacy reference (not used).
