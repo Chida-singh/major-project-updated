@@ -22,3 +22,7 @@ These map to the end-to-end pipeline stages.
 - Do not commit datasets, large videos, large arrays, or API keys.
 - Keep changes scoped to the task number you are working on.
 - Update `docs/ROADMAP.md` checkbox status when a task is finished.
+
+## Onboarding
+
+Start with `docs/SETUP_AND_RUN.md`.

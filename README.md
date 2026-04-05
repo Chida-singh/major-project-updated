@@ -23,6 +23,10 @@ Takes any lecture video, transcribes speech with **Whisper**, converts English �
 - `docs/` — project docs: roadmap, missing assets, API contracts.
 - `extension/` — existing Chrome extension shell (YouTube transcript extraction; will be upgraded to the overlay renderer).
 
+## Setup + run (teammates)
+
+See `docs/SETUP_AND_RUN.md` for Python 3.11 venv setup, dataset folder placement, and the exact commands to run the pipeline.
+
 Each folder has (or should have) its own README for teammates using other IDEs.
 
 ## Pipeline stages (end-to-end)

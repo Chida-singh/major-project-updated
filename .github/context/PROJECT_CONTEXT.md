@@ -27,3 +27,7 @@ Turn lecture videos into a browser overlay that shows a synchronized ASL signer 
 ## Where to track work
 
 - The master checklist is `docs/ROADMAP.md` (tasks are numbered `01_...` → `41_...`).
+
+## How to get running
+
+Use `docs/SETUP_AND_RUN.md` (Python 3.11 venv + dataset placement + run commands).
