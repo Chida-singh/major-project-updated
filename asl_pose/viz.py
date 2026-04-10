@@ -69,24 +69,36 @@ def visualize_pose_sequence(
     for frame_landmarks in seq:
         canvas = np.full((h, w, 3), 255, dtype=np.uint8)
 
-        # Pose is 33 points starting at index 468
-        pose_lms = frame_landmarks[468:501]
+        # Landmarks layout depends on whether face landmarks were included.
+        # - Full holistic: face(468) + pose(33) + left(21) + right(21) = 543
+        # - No-face: pose(33) + left(21) + right(21) = 75
+        landmark_count = int(frame_landmarks.shape[0])
+        if landmark_count >= 543:
+            pose_start = 468
+            left_start = 501
+            right_start = 522
+        elif landmark_count >= (33 + 21 + 21):
+            pose_start = 0
+            left_start = 33
+            right_start = 54
+        else:
+            raise ValueError(f"Unsupported landmark count: {landmark_count}")
+
+        pose_lms = frame_landmarks[pose_start : pose_start + 33]
         for (s, e) in POSE_CONNECTIONS:
             if s < len(pose_lms) and e < len(pose_lms):
                 x1, y1 = int(pose_lms[s, 0] * w), int(pose_lms[s, 1] * h)
                 x2, y2 = int(pose_lms[e, 0] * w), int(pose_lms[e, 1] * h)
                 cv2.line(canvas, (x1, y1), (x2, y2), (100, 100, 200), 2)
 
-        # Left hand is 21 points starting at index 501
-        left = frame_landmarks[501:522]
+        left = frame_landmarks[left_start : left_start + 21]
         for (s, e) in HAND_CONNECTIONS:
             if s < len(left) and e < len(left):
                 x1, y1 = int(left[s, 0] * w), int(left[s, 1] * h)
                 x2, y2 = int(left[e, 0] * w), int(left[e, 1] * h)
                 cv2.line(canvas, (x1, y1), (x2, y2), (50, 180, 100), 2)
 
-        # Right hand is 21 points starting at index 522
-        right = frame_landmarks[522:543]
+        right = frame_landmarks[right_start : right_start + 21]
         for (s, e) in HAND_CONNECTIONS:
             if s < len(right) and e < len(right):
                 x1, y1 = int(right[s, 0] * w), int(right[s, 1] * h)

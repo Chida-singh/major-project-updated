@@ -92,6 +92,16 @@ Recommended scaling approach:
 2. Then `1000`
 3. Then `2000` (overnight)
 
+### What “increase the size of the pose database” means
+
+You can increase size in 3 ways:
+
+1. **More glosses**: increase `--limit-glosses` up to `2000` (full WLASL gloss list).
+2. **More examples per gloss**: increase `--max-instances-per-gloss` (download stage) and `--limit-instances-per-gloss` (DB build stage).
+3. **More frames per example**: increase `--target-frames` (bigger `.npy` files, smoother motion).
+
+Note: `build-db` rewrites `pose_database/index.json` and overwrites per-gloss `.npy` files for the glosses it processes. If you want to keep multiple versions, use different output folders via `--output-dir`.
+
 ### Step A — Prepare/download trimmed clips
 
 This creates per-instance mp4 clips under `WLASL/start_kit/videos/`.
@@ -112,10 +122,17 @@ Example for WLASL2000 (1 instance per gloss):
 python tools\pose_pipeline.py build-db --limit-glosses 2000 --limit-instances-per-gloss 1
 ```
 
+Example with more instances + more frames (bigger DB):
+
+```powershell
+python tools\wlasl_setup.py --include-youtube --limit-glosses 2000 --max-instances-per-gloss 5
+python tools\pose_pipeline.py build-db --limit-glosses 2000 --limit-instances-per-gloss 5 --target-frames 60 --output-dir pose_database_2000x5_f60
+```
+
 Performance knobs you can use:
 
 - Faster (less accurate): add `--frame-step 2`
-- Faster (much less compute): add `--no-face` (drops face landmarks)
+- Faster (much less compute): add `--no-face` (drops face landmarks; landmark count changes)
 - If supported on your machine: add `--gpu`
 
 ### Rough storage expectations (pose DB only)

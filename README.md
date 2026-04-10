@@ -180,3 +180,6 @@ python tools\pose_pipeline.py viz --npy help.npy --out help.mp4
 ## Required-but-not-in-repo assets
 
 See `docs/MISSING_ASSETS.md` for a precise checklist of keys, datasets, and model files that should NOT be committed.
+
+
+Set-Location "d:/DSCE/Major Project/April 5th"; .\.venv\Scripts\python.exe tools\wlasl_setup.py --include-youtube --limit-glosses 2000 --max-instances-per-gloss 5; .\.venv\Scripts\python.exe tools\pose_pipeline.py build-db --limit-glosses 2000 --limit-instances-per-gloss 5 --target-frames 60 --output-dir pose_database_2000x5_f60
